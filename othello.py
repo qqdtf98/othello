@@ -70,32 +70,98 @@ def countStone():
   else: white_Tens.setImage(f"Images/L{int(white / 10)}.png")
   white_Units.setImage(f"Images/L{white % 10}.png")
 
-  print(black)
-  print(white)
+def count_xy_dir(x,y,dx,dy):
+  count = 0
+  if turn == Turn.BLACK:
+    mine = State.BLACK
+    other = State.WHITE
+  else:
+    mine = State.WHITE
+    other = State.BLACK
+
+  possible = False
+  while True:
+    x = x+dx
+    y = y+dy 
+
+    if x<0 or x>7: return
+    if y<0 or y>7: return
+
+    object = board[y][x]
+    if object.state == other:
+      possible = True
+    elif object.state == mine:
+      if possible:
+        while True:
+          x = x - dx
+          y = y - dy
+          object = board[y][x]
+          if object.state == other:
+            count+=1
+          else: return count
+    else: return
+
+
+def count_xy(x,y):
+  totalCount = 0
+  for i in range(-1,2):
+    for j in range(-1,2):
+      count = count_xy_dir(x,y,i,j)
+      if (i != 0 or j != 0) and count != None:
+        totalCount += count
+  return totalCount
+
+
+def setWhiteByComputer():
+  global turn
+
+  max = -1
+  maxi = -1
+  maxj = -1
+
+  for y in range(8):
+    for x in range(8):
+      if(board[y][x].state == State.POSSIBLE):
+        count = count_xy(x,y)
+        if(count != None):
+          if max < count:
+            max = count
+            maxi = x
+            maxj = y
+
+  object = board[maxj][maxi]
+  if object.state == State.POSSIBLE:
+    setState(maxi, maxj, State.WHITE)
+    reverse_xy(maxi,maxj)
+    turn = Turn.BLACK
+
+    if not setPossible():
+      turn = Turn.BLACK
+
+      if not setPossible(): 
+        showMessage("게임이 종료되었습니다.")
+
+  countStone()
+
 
 
 def stone_onMouseAction(x, y):
   global turn
 
   object = board[y][x]
-  if object.state == State.POSSIBLE: 
-    if turn == Turn.BLACK:
-      setState(x, y, State.BLACK)
-      reverse_xy(x,y)
-      turn = Turn.WHITE
-    else:
-      setState(x, y, State.WHITE)
-      reverse_xy(x,y)
-      turn = Turn.BLACK
+  if object.state == State.POSSIBLE:
+    setState(x, y, State.BLACK)
+    reverse_xy(x,y)
+    turn = Turn.WHITE
       
     if not setPossible():
-      if turn == Turn.BLACK: turn = Turn.WHITE
-      else: turn = Turn.BLACK
+      turn = Turn.WHITE
 
       if not setPossible(): 
         showMessage("게임이 종료되었습니다.")
 
   countStone()
+  setWhiteByComputer()
 
 
 def reverse_xy_dir(x,y,dx,dy):
@@ -111,8 +177,8 @@ def reverse_xy_dir(x,y,dx,dy):
     x = x+dx
     y = y+dy 
 
-    if x<0 or x>7: return    
-    if y<0 or y>7: return    
+    if x<0 or x>7: return
+    if y<0 or y>7: return
 
     object = board[y][x]
     if object.state == other:
@@ -130,14 +196,9 @@ def reverse_xy_dir(x,y,dx,dy):
 
 
 def reverse_xy(x,y):
-  reverse_xy_dir(x,y,0,1)   
-  reverse_xy_dir(x,y,1,1)   
-  reverse_xy_dir(x,y,1,0)   
-  reverse_xy_dir(x,y,1,-1)   
-  reverse_xy_dir(x,y,0,-1)   
-  reverse_xy_dir(x,y,-1,-1)   
-  reverse_xy_dir(x,y,-1,0)   
-  reverse_xy_dir(x,y,-1,1)
+  for i in range(-1,2):
+    for j in range(-1,2):
+      if(i != 0 or j != 0): reverse_xy_dir(x,y,i,j)
 
 def setPossible_xy_dir(x,y,dx,dy):
   if turn == Turn.BLACK:
@@ -170,14 +231,10 @@ def setPossible_xy(x,y):
   if object.state == State.WHITE: return False
   setState(x,y,State.BLANK)
    
-  if (setPossible_xy_dir(x,y,0,1)): return True
-  if (setPossible_xy_dir(x,y,1,1)): return True
-  if (setPossible_xy_dir(x,y,1,0)): return True
-  if (setPossible_xy_dir(x,y,1,-1)): return True
-  if (setPossible_xy_dir(x,y,0,-1)): return True
-  if (setPossible_xy_dir(x,y,-1,-1)): return True
-  if (setPossible_xy_dir(x,y,-1,0)): return True
-  if (setPossible_xy_dir(x,y,-1,1)): return True
+  for i in range(-1,2):
+    for j in range(-1,2):
+      if i != 0 or j != 0:
+        if setPossible_xy_dir(x,y,i,j): return True
   return False
 
      
